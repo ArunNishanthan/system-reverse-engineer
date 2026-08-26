@@ -13,6 +13,15 @@ Create maintainable documentation for large brownfield systems from:
 
 Markdown is canonical. Docusaurus is the human-facing documentation shell. This skill owns system framing, scope, reverse engineering, evidence, interviews, technical completeness, documentation content, diagrams, and ensuring the Docusaurus site actually builds.
 
+## References
+
+Load supporting references only when relevant:
+
+- **Docusaurus setup, navigation, Mermaid, MDX, styling or build work:** read `references/docusaurus.md` before changing the documentation site.
+- **Framework-specific code discovery, especially Spring Boot/Spring Batch:** read `references/framework-discovery.md` before deep implementation tracing.
+
+These references are guidance. Existing repository conventions and approved/installed dependency versions take precedence for exact commands/configuration.
+
 ## Hard Rules
 
 1. **Never assume the requested module is the whole system.** Establish hierarchy first.
@@ -34,6 +43,8 @@ Preferred location:
 <repo-root>/
   documentation/
 ```
+
+Before initializing, repairing, styling or structurally changing Docusaurus, read `references/docusaurus.md`.
 
 ### Existing Docusaurus project
 
@@ -116,6 +127,8 @@ Ask the user to approve/correct this map before treating it as canonical.
 This prevents a large module from becoming one artificial `outward-flow`.
 
 ## Stage 3 - Reverse Engineer Progressively
+
+Before deep implementation tracing in Spring Boot/Spring Batch or another supported framework, read `references/framework-discovery.md` when applicable.
 
 Investigate one approved capability/flow/subflow at a time:
 
@@ -298,7 +311,7 @@ Sub-agents return findings; **the coordinator is the canonical writer**. Do not 
 
 ## Human Documentation / Docusaurus Publishing
 
-Human documentation is a first-class deliverable.
+Human documentation is a first-class deliverable. Read `references/docusaurus.md` before site/navigation/visual implementation work.
 
 ### Information architecture
 
@@ -353,7 +366,7 @@ Do not duplicate all documentation into an agent-only knowledge tree. The index 
 
 ## Docusaurus Build Discipline
 
-Docusaurus infrastructure must not become an unfinished side project.
+Docusaurus infrastructure must not become an unfinished side project. Follow `references/docusaurus.md` for detailed setup/build guidance.
 
 - Pin/use the repository-approved dependency versions.
 - Do not upgrade dependencies unless required/approved.
