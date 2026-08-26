@@ -1,114 +1,90 @@
 # System Reverse Engineer
 
-An Agent Skill for evidence-driven reverse engineering and living documentation of complex existing software systems.
+An Agent Skill for reverse-engineering large existing software systems into evidence-backed documentation that is useful to both humans and coding agents.
 
-It is intended for systems where useful knowledge is spread across source code, multiple services, batch jobs, APIs, databases, statuses, files/events, operational behavior, existing artifacts, and the heads of experienced engineers.
+The skill is designed for systems where understanding is spread across source code, microservices, batch jobs, APIs, databases, statuses, files/events, integrations, tests, operational procedures, existing documents, and experienced engineers.
 
-## Core ideas
+## What it does
 
-- The user chooses documentation scope before deep discovery.
-- Unselected capabilities remain strictly out of scope.
-- Code, documents, and domain-expert interviews are combined.
-- Unknowns stay unknown instead of being filled with plausible AI-generated behavior.
-- Large flows are decomposed and checkpointed so work can continue across sessions.
-- Sub-agents can investigate independent bounded questions, while one coordinator owns canonical knowledge.
-- A compact knowledge graph helps future coding agents navigate the system quickly.
-- Docusaurus + MDX + Mermaid provide the default human-facing documentation experience.
-- Statuses, variants, timelines, failures, recovery paths and business rationale are first-class knowledge.
-
-## Skill contents
+The skill follows this workflow:
 
 ```text
-SKILL.md
-references/
-  knowledge-model.md
-  docusaurus-visuals.md
-  framework-discovery.md
+Frame system
+    -> approve scope
+    -> map selected module
+    -> approve decomposition
+    -> reverse engineer progressively
+    -> interview domain experts
+    -> verify evidence
+    -> write canonical Markdown
+    -> publish/validate with docmd
 ```
 
-`SKILL.md` is the skill entry point. References are loaded when the task needs deeper schema, visualization, or framework-specific discovery guidance.
+It deliberately separates **system understanding** from **documentation presentation**.
 
-## Installation
+- `system-reverse-engineer` owns discovery, interviewing, hierarchy, evidence and technical completeness.
+- `docmd` and its official agent skill own the documentation site, navigation, Mermaid presentation, search, OKF/agent outputs, MCP integration, validation and build mechanics.
 
-The repository itself follows the portable Agent Skills layout. Copy or clone it into the skills location supported by your agent runtime.
+## Key principles
 
-Common layouts include a directory containing:
+- Never assume the requested module is the whole system.
+- `Module != Flow`.
+- Establish `System -> Module -> Capability -> Flow -> Subflow -> Processing Step -> Technical Component` before deep investigation.
+- Require user approval of system/module scope.
+- Require another approval of the selected module's capability/flow decomposition.
+- Anything not approved is strictly `OUT_OF_SCOPE`.
+- Combine code evidence, existing authoritative artifacts and domain-expert interviews.
+- Never present inference as fact.
+- Keep unknowns and conflicts explicit.
+- Decompose large flows and checkpoint progress so another session can resume safely.
+- Use sub-agents for bounded independent investigations when supported; one coordinator owns canonical knowledge.
+- Human-facing documentation is mandatory. Agent knowledge alone is not completion.
+- Markdown is canonical so the same knowledge can serve humans, Claude/Gemini, Copilot/Notebook and other agents.
 
-```text
-system-reverse-engineer/
-  SKILL.md
-  references/
-```
+## Documentation platform prerequisite
 
-Claude Code supports project/user skills, and agent runtimes may also support a shared `.agents/skills/` location. Use the current documentation for your CLI/runtime for its preferred skill path.
+This skill uses **docmd** for human and agent-facing publication.
 
-For an office environment with no internet access, copy this entire directory into the approved local skills location. The skill does not depend on this GitHub repository at runtime.
+Before documentation generation, the agent checks for:
 
-## Example usage
+1. a usable docmd CLI/runtime
+2. the official docmd agent skill/instructions
 
-Fresh codebase:
+If the repository already contains a docmd project, it is reused.
 
-```text
-Use system-reverse-engineer to document this application with me.
-```
+If docmd or its official skill is unavailable, the agent stops and asks the user to configure it. It must **not** silently fall back to Docusaurus or invent another documentation framework.
 
-The skill should first detect whether a documentation knowledge layer exists and ask you to establish scope before deep exploration.
+The Markdown source remains directly usable even when docmd MCP is not enabled. MCP is an optional agent access path rather than the source of truth.
 
-Example scope answer:
+## What each documented module should contain
 
-```text
-Document inward clearing, outward clearing, cheque book and inventory.
-Reports and data migration are out of scope.
-```
+Every approved module becomes an independently useful technical handbook. Where applicable it covers:
 
-Continuing later:
+- Overview and terminology
+- Architecture and component responsibilities
+- Capabilities
+- Business flows and subflows
+- Processing timeline and dependencies
+- State/status transitions
+- Data model and important table schemas
+- Batch jobs and steps
+- APIs
+- Integrations
+- Files, events and messaging
+- Business rules
+- Variants and branches
+- Error handling
+- Recovery and reprocessing
+- Testing and test-data setup
+- Operations and troubleshooting
+- Architecture decisions/rationale
+- Code map and important entry points
 
-```text
-Continue reverse engineering inward clearing from the last checkpoint.
-```
-
-Focused investigation:
-
-```text
-Document debit processing. Interview me whenever the business behavior cannot be established from evidence.
-```
-
-Maintenance:
-
-```text
-I changed the debit processing flow. Update the affected system knowledge and documentation.
-```
-
-## Expected target-project layout
-
-The skill can initialize a package similar to:
-
-```text
-<project-root>/
-├── <microservices...>/
-├── documentation/
-│   ├── knowledge/
-│   │   ├── index.yaml
-│   │   ├── scope.yaml
-│   │   ├── domains/
-│   │   ├── flows/
-│   │   ├── statuses/
-│   │   ├── components/
-│   │   ├── integrations/
-│   │   ├── decisions/
-│   │   └── evidence/
-│   ├── checkpoints/
-│   ├── questions/
-│   ├── docs/
-│   └── src/components/
-└── [agent instruction file]
-```
-
-The exact layout should respect existing repository conventions.
+A material category should be documented, marked `NOT_APPLICABLE`, or identified as `UNKNOWN`; it should not silently disappear.
 
 ## Evidence model
 
-The skill distinguishes:
+Material knowledge is classified as:
 
 - `CODE_VERIFIED`
 - `DOCUMENT_VERIFIED`
@@ -117,32 +93,134 @@ The skill distinguishes:
 - `UNKNOWN`
 - `CONFLICT`
 
-`INFERRED` information is not authoritative documentation. It must be verified or confirmed first.
+`INFERRED` information cannot become authoritative documentation until it is verified or confirmed.
 
-## Documentation coverage
+If code and user/domain knowledge disagree, the skill preserves both as a `CONFLICT` and investigates instead of silently choosing one.
 
-Coverage is tracked independently:
+## Scope model
+
+Documentation coverage is tracked separately:
 
 - `DOCUMENTED`
 - `IN_PROGRESS`
 - `TODO`
 - `OUT_OF_SCOPE`
 
-This makes intentional omissions visible and prevents an agent from expanding into modules that were deliberately excluded.
+An out-of-scope module may appear as a verified dependency boundary, but the agent must not investigate its internals without explicit scope expansion.
 
-## Visual documentation
+## Example
 
-The default visual strategy combines Mermaid with reusable interactive MDX/React views such as:
+If the user says:
 
-- Flow Explorer
-- Status Explorer
-- Variant Explorer
-- Processing Timeline
-- Knowledge Graph
-- Failure Explorer
+```text
+Document Outward Clearing.
+```
 
-The skill intentionally prefers progressive drill-down over giant diagrams and uses semantic color rather than decoration.
+The skill must **not** interpret Outward Clearing as the entire application or as one flow.
 
-## Safety for proprietary systems
+It first establishes something like:
 
-Run the skill only with AI tooling, repositories, source code, and infrastructure approved by your organization. The skill is designed to operate locally beside a codebase; it does not require sending project knowledge to this public repository.
+```text
+Cheque Clearing Platform
+|- Inward Clearing       OUT_OF_SCOPE
+|- Outward Clearing      IN_SCOPE
+|- Cheque Book           OUT_OF_SCOPE
+|- Inventory             OUT_OF_SCOPE
+|- Reports               OUT_OF_SCOPE
+`- Data Migration        OUT_OF_SCOPE
+```
+
+After user approval, it discovers candidate capabilities inside Outward Clearing and asks for another approval before deep reverse engineering.
+
+## User interviewing
+
+The skill interviews the domain expert whenever code cannot reliably establish business or operational truth, including:
+
+- business meaning and terminology
+- ordering and gates between processes
+- status meaning
+- variants and branching rules
+- manual/operator activities
+- recovery/reprocessing
+- testing practices
+- troubleshooting
+- historical rationale and design decisions
+
+Questions should be focused and preferably asked one at a time. Answers are stored as `USER_CONFIRMED` knowledge and cross-checked against implementation where applicable.
+
+## Status and data modelling
+
+Statuses are first-class knowledge. The skill traces actual writes, reads, conditions, consumers and side effects rather than generating a state machine from an enum.
+
+Important tables/entities are documented with their purpose, ownership, important keys/columns, relationships, lifecycle, readers/writers, relevant flows and source evidence rather than as raw schema dumps.
+
+Mermaid diagrams are used where they improve understanding, including architecture, flow, sequence, state-transition and ER diagrams. Large systems use progressive drill-down instead of giant diagrams.
+
+## Testing and operations
+
+Documentation should help a future engineer safely modify and validate the system. Where applicable it captures:
+
+- prerequisites and configuration
+- test-data setup
+- how to trigger jobs/APIs/flows
+- expected statuses/results
+- database verification
+- mocks/stubs and existing tests
+- integration testing approach
+- failure identification
+- safe recovery/reprocessing
+- troubleshooting entry points
+
+If this cannot be determined from evidence, the agent asks the user instead of inventing a procedure.
+
+## Checkpoints and sub-agents
+
+Large systems are processed incrementally. Checkpoints preserve system framing, approved scope, approved decomposition, completed/in-progress work, open questions, unknowns, conflicts and important user confirmations.
+
+When sub-agents are supported, they may investigate independent bounded questions such as job discovery, schema usage, APIs, integrations or status writes. They return evidence-backed findings; the coordinator reconciles and writes canonical documentation.
+
+## Completion criteria
+
+The task is not complete merely because an agent knowledge/index artifact exists.
+
+For the requested scope, completion requires the relevant system/module framing and decomposition to be approved, technical documentation to be produced, important unknowns/conflicts to be reported, human Markdown pages and useful diagrams to exist, and docmd validation/build to succeed when tooling is available.
+
+## Repository contents
+
+```text
+system-reverse-engineer/
+|- SKILL.md
+|- README.md
+`- references/
+   `- framework-discovery.md
+```
+
+`SKILL.md` contains the workflow and hard behavioral rules. `references/framework-discovery.md` contains additional framework-aware discovery guidance, including Spring Boot/Spring Batch patterns.
+
+## Installation
+
+Copy or clone this directory into the skills location supported by your agent runtime. The skill itself does not depend on this GitHub repository at runtime.
+
+For restricted/offline environments, copy the skill and configure docmd using whatever installation method is approved by your organization.
+
+## Example prompts
+
+```text
+Use system-reverse-engineer to document this application with me.
+```
+
+```text
+Document Outward Clearing only. Interview me when business behavior cannot be established from the code.
+```
+
+```text
+Continue from the last documentation checkpoint.
+```
+
+```text
+I changed this processing flow. Update only the affected system documentation.
+```
+
+## Proprietary systems
+
+Use the skill only with repositories, AI tooling and infrastructure approved by your organization. The skill is designed to operate beside the source repository; project knowledge does not need to be published to this public repository.
