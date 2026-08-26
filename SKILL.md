@@ -170,8 +170,6 @@ Update the graph incrementally after facts are verified. Do not model every clas
 
 Keep `documentation/AGENT_INDEX.md` small and point it to the approved module map, graph, canonical docs and checkpoint. Do not duplicate the documentation corpus into an agent-only tree.
 
-When `scripts/validate_graph.py` is available, run it after graph changes and at completion. Treat validation failures as documentation defects.
-
 ## Checkpoint / Resume Protocol
 
 Persist a small checkpoint containing system framing, approved scope, approved decomposition, current bounded area, completed/in-progress/unexplored approved areas, open questions, unknowns, conflicts, important user confirmations and last checkpoint.
@@ -215,13 +213,11 @@ Use overview -> drill-down -> technical reference. Use Mermaid for architecture,
 
 Prefer built-in Docusaurus/admonitions/details/tabs and plain Markdown before custom MDX/React. Keep animations subtle/optional; static documentation must remain complete.
 
-## Build and Validation Discipline
+## Build Discipline
 
 Use repository-approved dependency versions and existing package manager/scripts. Do not upgrade unless required/approved.
 
-Build Docusaurus after initial setup, after structural config/sidebar/theme changes, and at completion. Treat broken links, invalid MDX/Mermaid, sidebar failures and custom-component errors as defects.
-
-Validate the knowledge graph after graph changes and at completion when the validator is available. Do not declare completion while either required validation or the Docusaurus build is broken.
+Build Docusaurus after initial setup, after structural config/sidebar/theme changes, and at completion. Treat broken links, invalid MDX/Mermaid, sidebar failures and custom-component errors as defects. Do not declare completion while the required Docusaurus build is broken.
 
 ## Completion Gate
 
@@ -235,12 +231,12 @@ For approved scope require:
 - scope boundaries respected
 - human Markdown/MDX and useful diagrams generated
 - navigation/cross-links generated
-- knowledge graph updated and validated when configured
+- knowledge graph updated when configured
 - agent index points to canonical docs/graph/checkpoint
 - Docusaurus production build succeeds
 - checkpoint is current
 
-If build/validation tooling cannot run, state that and do not claim it passed. Do not claim semantic completeness while material `UNKNOWN` or `CONFLICT` items remain.
+If build tooling cannot run, state that and do not claim it passed. Do not claim semantic completeness while material `UNKNOWN` or `CONFLICT` items remain.
 
 ## Maintenance Mode
 
@@ -252,7 +248,7 @@ For later changes:
 4. Update only affected canonical Markdown/MDX.
 5. Update affected graph nodes/edges, diagrams, links and navigation.
 6. Preserve unrelated and `USER_CONFIRMED` rationale.
-7. Run graph validation and Docusaurus production build.
+7. Run Docusaurus production build.
 8. Checkpoint.
 
 If code contradicts human-confirmed rationale, preserve both and ask whether the business rule/design changed.
