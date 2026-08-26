@@ -1,17 +1,17 @@
 ---
 name: system-reverse-engineer
-description: Use when reverse-engineering, documenting, handing over, onboarding to, or maintaining a large existing software system. Builds scoped, evidence-backed human and agent documentation by framing system/module/capability/flow hierarchy, interviewing domain experts, tracing code, statuses, schemas, jobs, APIs, integrations, tests and operations, and publishing verified Markdown through docmd.
+description: Use when reverse-engineering, documenting, handing over, onboarding to, or maintaining a large existing software system. Builds scoped, evidence-backed human and agent documentation by framing system/module/capability/flow hierarchy, interviewing domain experts, tracing architecture, statuses, schemas, jobs, APIs, integrations, tests and operations, and publishing verified Markdown through Docusaurus.
 ---
 
 # System Reverse Engineer
 
 ## Purpose
 
-Create maintainable documentation for large brownfield systems from three sources:
+Create maintainable documentation for large brownfield systems from:
 
-`source code + existing artifacts + domain-expert interviews -> verified Markdown -> docmd`
+`source code + existing artifacts + domain-expert interviews -> verified Markdown -> Docusaurus`
 
-The Markdown documentation is canonical and must serve both humans and agents. docmd owns presentation, navigation, search, Mermaid rendering, OKF/agent outputs, MCP integration, validation and build mechanics. This skill owns system framing, scope, reverse engineering, evidence, interviews, technical completeness and documentation content.
+Markdown is canonical. Docusaurus is the human-facing documentation shell. This skill owns system framing, scope, reverse engineering, evidence, interviews, technical completeness, documentation content, diagrams, and ensuring the Docusaurus site actually builds.
 
 ## Hard Rules
 
@@ -22,13 +22,11 @@ The Markdown documentation is canonical and must serve both humans and agents. d
 5. **Never publish inference as fact.** Ask, verify or mark unknown.
 6. **Interview the user/domain expert whenever code cannot establish business meaning or operational truth.**
 7. **Checkpoint continuously.** Large systems must be resumable across sessions/context windows.
-8. **Human documentation is mandatory.** Agent-oriented knowledge alone never completes the task.
-9. **Do not build a documentation framework.** Use docmd and its official skill/instructions.
-10. **Preserve human-confirmed rationale.** Never silently overwrite it during regeneration or maintenance.
+8. **Human documentation is mandatory.** Agent-oriented notes alone never complete the task.
+9. **Docusaurus setup is infrastructure, not the main task.** Keep it minimal, stable and separate from reverse engineering.
+10. **Preserve human-confirmed rationale.** Never silently overwrite it.
 
 ## Stage 0 - Documentation Environment Gate
-
-Before documentation work, inspect the repository root and documentation area.
 
 Preferred location:
 
@@ -37,32 +35,25 @@ Preferred location:
   documentation/
 ```
 
-### Existing docmd project
+### Existing Docusaurus project
 
-If a docmd project already exists, use it. Read its project instructions/configuration and continue without rebuilding the site infrastructure.
+If `documentation/` already contains a working Docusaurus project, reuse it. Read its package/config/sidebar/theme conventions before changing anything. Do not reinitialize or replace a working setup merely to match preferences.
 
-### No docmd project
+### No Docusaurus project
 
-Check whether both are available:
+If no documentation site exists, initialize a minimal Docusaurus site under `documentation/` using the Docusaurus version and package source available/approved in the environment.
 
-- docmd CLI/runtime
-- official docmd agent skill/instructions
+If Docusaurus packages/tooling are unavailable, stop and ask the user to configure/provide them. Do not silently switch to another documentation framework.
 
-If both are available, ask the user for permission to initialize docmd under `documentation/` unless they already explicitly requested initialization.
+After initialization, immediately run the available build command. **Do not begin large-scale documentation generation on top of a broken site.** Fix/resolve setup first.
 
-If either is unavailable, **stop documentation generation** and ask the user to configure/install docmd and its official agent skill. Do not silently fall back to Docusaurus, another framework, or a homemade site.
+Keep custom frontend work small. Prefer standard Docusaurus features, Markdown/MDX, Mermaid, CSS variables and reusable components only when they materially improve comprehension.
 
-Suggested message:
-
-> This repository does not have a usable docmd setup. Please configure docmd and its official agent skill, then ask me to continue. I will not improvise a different documentation platform.
-
-When the official docmd skill is available, use it for docmd initialization, Markdown/frontmatter conventions, navigation, Mermaid presentation, OKF/agent outputs, validation and build. Do not duplicate or invent docmd-specific behavior in this skill.
-
-The documentation source must remain useful as ordinary Markdown even when MCP is unavailable. docmd MCP is an optional efficient agent interface; do not make documentation correctness depend on MCP transport availability.
+Do not let site setup consume the reverse-engineering task. Once the shell builds, move to system framing and content.
 
 ## Stage 1 - Frame the System
 
-Before deep reverse engineering, establish the conceptual hierarchy:
+Before deep reverse engineering, establish:
 
 ```text
 SYSTEM
@@ -76,20 +67,20 @@ SYSTEM
 
 Not every system needs every level, but levels must not be collapsed without evidence or user confirmation.
 
-Ask focused questions needed to establish at least:
+Ask focused questions needed to establish:
 
 - overall system/product name and purpose
 - major known modules/business areas
 - exact module(s)/capabilities requested for documentation
-- explicit exclusions or deferred areas
+- explicit exclusions/deferred areas
 
-A request such as "document Outward Clearing" means Outward Clearing is the **current scope inside a larger system** unless the user explicitly confirms otherwise. It does not mean the entire repository/system is Outward Clearing.
+A request such as "document Outward Clearing" means Outward Clearing is the **current scope inside a larger system** unless explicitly confirmed otherwise. It does not mean the repository/system is Outward Clearing.
 
-Persist the framing and scope immediately.
+Persist framing and scope immediately in a small documentation metadata/checkpoint area.
 
 ### Mandatory framing approval gate
 
-Before deep investigation, show the user your current hierarchy and scope, for example:
+Show the user the current hierarchy/scope before deep investigation, for example:
 
 ```text
 Cheque Clearing Platform
@@ -105,9 +96,9 @@ Ask the user to approve/correct it. **Do not proceed to deep reverse engineering
 
 ## Stage 2 - Map the Selected Module Before Documenting It
 
-Explore only enough in-scope code/artifacts to identify candidate capabilities and flows. Do not generate final documentation yet.
+Explore only enough in-scope code/artifacts to identify candidate capabilities and flows. Do not assume package/service boundaries equal business flows.
 
-Report the candidate decomposition to the user, including uncertainties. Example:
+Report the candidate decomposition with uncertainties, for example:
 
 ```text
 Outward Clearing
@@ -120,46 +111,32 @@ Outward Clearing
 
 ### Mandatory decomposition approval gate
 
-Ask the user to approve/correct the module decomposition before treating these as canonical flows/capabilities.
+Ask the user to approve/correct this map before treating it as canonical.
 
-This prevents a large module from becoming one artificial `outward-flow` and prevents technical package structure from being mistaken for business structure.
+This prevents a large module from becoming one artificial `outward-flow`.
 
 ## Stage 3 - Reverse Engineer Progressively
 
-Investigate one approved capability/flow/subflow at a time.
+Investigate one approved capability/flow/subflow at a time:
 
-For each bounded investigation:
-
-1. Read existing relevant documentation/checkpoint context.
+1. Read relevant existing docs/checkpoint context.
 2. Trace concrete implementation evidence.
-3. Identify statuses, data, jobs, APIs, integrations, files/events, rules, errors, tests and operational behavior involved.
+3. Identify architecture, statuses, data, jobs, APIs, integrations, files/events, rules, errors, tests and operations involved.
 4. Record evidence and unresolved gaps.
-5. Interview the user for business/operational knowledge code cannot establish.
+5. Interview the user for knowledge code cannot establish.
 6. Cross-check user explanations against implementation where applicable.
 7. Reconcile conflicts explicitly.
-8. Write/update the verified Markdown for that bounded area.
-9. Checkpoint before switching areas.
+8. Write/update verified human-facing Markdown/MDX for that bounded area.
+9. Update navigation/cross-links as needed.
+10. Checkpoint before switching areas.
 
-If a flow becomes too large, split it into child flows/subflows, persist the parent map, and investigate children independently.
+If a flow becomes too large, split it into child flows/subflows and investigate them independently.
 
 ## Interview Protocol
 
-Interviewing is a first-class discovery mechanism, not a fallback.
+Interviewing is a first-class discovery mechanism.
 
-Ask when evidence cannot establish:
-
-- business purpose or terminology
-- why a rule/design exists
-- ordering between independently triggered processes
-- manual/operator activities
-- operational timing
-- status business meaning
-- variants/branches and their conditions
-- exceptional paths and recovery/reprocessing
-- ownership boundaries
-- how the team actually tests a flow/integration
-- troubleshooting practices
-- historical decisions or deliberate omissions
+Ask when evidence cannot establish business purpose, terminology, rationale, ordering, manual activities, operational timing, status meaning, variants, exceptional paths, recovery/reprocessing, ownership, testing practices, troubleshooting or historical decisions.
 
 Prefer one precise question at a time.
 
@@ -167,285 +144,286 @@ Good:
 
 > I verified that ingestion writes `READY`, but I cannot establish what business condition allows Debit processing to begin. What gates Debit after ingestion?
 
-Bad:
-
-> Explain the whole module.
-
-After an answer, save it as `USER_CONFIRMED`, then search for supporting implementation evidence when the statement describes current technical behavior.
+After an answer, record it as `USER_CONFIRMED`, then seek implementation evidence when it describes current technical behavior.
 
 ## Evidence / Zero-Hallucination Contract
 
-Every material claim uses one of these states:
+Use these states:
 
-- `CODE_VERIFIED` - directly supported by current source/configuration/tests/schema
-- `DOCUMENT_VERIFIED` - supported by an authoritative existing artifact
-- `USER_CONFIRMED` - explicitly confirmed by a domain expert
-- `INFERRED` - plausible but not verified
+- `CODE_VERIFIED` - current source/config/tests/schema
+- `DOCUMENT_VERIFIED` - authoritative existing artifact
+- `USER_CONFIRMED` - domain expert confirmation
+- `INFERRED` - plausible but unverified
 - `UNKNOWN` - unresolved
 - `CONFLICT` - credible sources disagree
 
-Authoritative human documentation may state `CODE_VERIFIED`, `DOCUMENT_VERIFIED` and `USER_CONFIRMED` knowledge as facts.
+Only verified/confirmed knowledge may be stated authoritatively.
 
-`INFERRED` must be verified or confirmed before becoming authoritative prose.
+`INFERRED` must be verified/confirmed first. `UNKNOWN` remains visible when material. `CONFLICT` preserves competing evidence and triggers investigation.
 
-`UNKNOWN` must remain visible when material. Do not make a diagram look complete by inventing a transition.
-
-`CONFLICT` must preserve competing evidence and trigger investigation/user clarification.
-
-Never invent schedules, status meanings, transition rules, retries, API semantics, schema relationships, business rationale, testing procedures, operational recovery or behavior beyond an out-of-scope boundary.
+Never invent schedules, status meanings, transitions, retries, API semantics, schema relationships, rationale, testing procedures, recovery or out-of-scope behavior.
 
 ## Scope Contract
 
-Track coverage separately from evidence:
+Coverage states:
 
 - `DOCUMENTED`
 - `IN_PROGRESS`
 - `TODO`
 - `OUT_OF_SCOPE`
 
-Anything not explicitly approved for current documentation is `OUT_OF_SCOPE`, not `UNKNOWN`.
+Anything not explicitly approved is `OUT_OF_SCOPE`, not `UNKNOWN`.
 
-If an in-scope component calls an excluded module, document only:
+For dependencies outside scope, document only:
 
 `in-scope component -> verified interface/event/file/API -> OUT_OF_SCOPE module`
 
-Do not follow the dependency internally. Ask before expanding scope. Sub-agents inherit the same boundary.
+Do not inspect the other module's internals without scope expansion.
 
 ## Module Documentation Contract
 
-Every approved module must become an independently useful technical handbook. Each applicable category must be documented, explicitly `NOT_APPLICABLE`, or identified as `UNKNOWN`; important categories must not silently disappear.
+Every approved module must become an independently useful technical handbook. Each applicable category must be documented, marked `NOT_APPLICABLE`, or identified as `UNKNOWN`.
 
 Required categories where applicable:
 
-1. **Overview** - purpose, ownership/boundary, terminology
-2. **Architecture** - services/components and responsibilities, runtime relationships, key design decisions
-3. **Capabilities** - module decomposition
-4. **Business Flows** - end-to-end flows and subflows
-5. **Processing Timeline** - ordering, triggers, gates, schedules only when verified
-6. **State & Status Model** - definitions, transitions, producers/consumers, conditions and side effects
-7. **Data Model** - entities/tables, relationships, ownership and lifecycle
+1. **Overview** - purpose, boundary, terminology
+2. **Architecture** - services/components, responsibilities, runtime relationships, decisions
+3. **Capabilities** - approved decomposition
+4. **Business Flows** - end-to-end flows/subflows
+5. **Processing Timeline** - ordering, triggers, gates, verified schedules
+6. **State & Status Model** - meanings, transitions, producers/consumers, conditions, side effects
+7. **Data Model** - entities/tables, relationships, ownership, lifecycle
 8. **Table Schemas** - important columns/keys/status fields and read/write usage
 9. **Batch Jobs** - purpose, trigger, parameters, steps, reader/processor/writer/tasklet, dependencies, restart/recovery
-10. **APIs** - purpose, caller, endpoint/contract, validation, status/data effects, errors
-11. **Integrations** - direction, protocol, data exchanged, trigger, retry/timeout/reconciliation behavior when verified
-12. **Files / Events / Messaging** - producers/consumers, formats/topics, ordering and processing relationship
-13. **Business Rules** - conditions and rationale where known
-14. **Variants & Branches** - type/size/country/channel/etc. and where flows diverge/rejoin
+10. **APIs** - purpose, caller, endpoint/contract, validation, data/status effects, errors
+11. **Integrations** - direction, protocol, data, trigger, timeout/retry/reconciliation when verified
+12. **Files / Events / Messaging** - producers/consumers, formats/topics, ordering
+13. **Business Rules** - conditions and rationale
+14. **Variants & Branches** - type/size/country/channel/etc. and divergence/rejoin points
 15. **Error Handling** - failure states and impact
 16. **Recovery / Reprocessing** - automatic/manual behavior and restrictions
-17. **Testing** - prerequisites, test data, triggering, expected result, DB/status verification, mocks/stubs and existing tests
-18. **Operations / Troubleshooting** - how to identify stuck processing, logs/metrics when verified, safe recovery and prohibited manual actions
-19. **Architecture Decisions / Rationale** - why unusual behavior exists, especially deliberate omissions
+17. **Testing** - prerequisites, test data, triggering, expected result, DB/status verification, mocks/stubs/tests
+18. **Operations / Troubleshooting** - stuck processing, logs/metrics, safe recovery, prohibited manual actions
+19. **Architecture Decisions / Rationale** - why unusual behavior exists
 20. **Code Map** - important entry points and where to start for common changes
 
-Do not generate filler for a missing category. Ask the user when the missing knowledge is material.
+Do not generate filler. Ask when missing knowledge is material.
 
 ## State Transition Rules
 
-Statuses are first-class system knowledge.
-
 Do not derive a state machine from an enum alone. Trace:
 
-- entity owning the status
+- owning entity
 - business meaning
-- current status
+- current state
 - event/condition
-- next status
-- code that sets it
-- code/process that consumes it
+- next state
+- setter
+- consumer
 - variant applicability
 - side effects
-- failure/recovery path
+- failure/recovery
 - evidence
 
-Search writes, reads, predicates, repository queries, jobs/listeners/controllers, tests and user knowledge.
+Search writes, reads, predicates, repository queries, jobs/listeners/controllers and tests.
 
-Generate both a readable transition table and Mermaid state diagram when useful. Unknown transitions remain unknown.
+Generate a transition table plus Mermaid state diagram when useful. Unknown transitions stay unknown.
 
 ## Data / Schema Rules
 
-For important tables/entities document:
+For important tables/entities document purpose, ownership, keys, important columns, relationships, lifecycle, readers, writers, relevant jobs/APIs/flows and evidence.
 
-- business/technical purpose
-- owning module/component
-- primary/foreign/business keys
-- important columns, especially statuses and routing fields
-- relationships
-- lifecycle
-- writers
-- readers
-- relevant jobs/APIs/flows
-- schema/entity/migration/query evidence
-
-Prefer useful technical understanding over dumping every column. Use Mermaid ER diagrams where they improve comprehension.
+Prefer useful technical understanding over raw column dumps. Use Mermaid ER diagrams where helpful.
 
 ## Jobs, APIs and Integrations Must Connect to Flows
 
 Do not create isolated inventories.
 
-Every important job/API/integration should explain **why it exists and where it participates in the module's behavior**.
+Every important job/API/integration explains why it exists and where it participates.
 
-For jobs include trigger, parameters, steps, data read/write, statuses, dependencies, integrations, failure/restart/reprocessing, testing and source location.
+Jobs: trigger, parameters, steps, reads/writes, statuses, dependencies, integrations, failure/restart/reprocessing, testing, source.
 
-For APIs include purpose, caller, request/response semantics, validation, state/data changes, downstream calls, errors, testing and source location.
+APIs: purpose, caller, request/response semantics, validation, state/data changes, downstream calls, errors, testing, source.
 
-For integrations include purpose, ownership/direction, protocol, payload/data, trigger, timeout/retry/reconciliation behavior, failure impact, testing and source location when verifiable.
+Integrations: purpose, ownership/direction, protocol, payload/data, trigger, timeout/retry/reconciliation, failure impact, testing, source when verifiable.
 
 ## Testing and Maintainability
 
-Documentation is incomplete if a future engineer understands architecture but cannot safely change or test it.
-
 Capture where applicable:
 
-- local/runtime prerequisites
+- runtime/local prerequisites
 - required configuration
 - test-data setup
-- how to trigger a flow/job/API
+- how to trigger flows/jobs/APIs
 - expected statuses/results
-- database verification
-- mocks/stubs/test doubles
+- DB verification
+- mocks/stubs
 - existing unit/integration/component tests
 - integration testing approach
 - safe troubleshooting/recovery
 - common change entry points
 
-If the repository does not reveal how the team tests an external integration, ask the user rather than inventing a process.
+If evidence does not reveal how the team tests an integration, ask rather than inventing a procedure.
 
 ## Checkpoint / Resume Protocol
 
-Do not rely on conversation context for large projects.
+Do not rely on conversation context.
 
-Persist a small resume/checkpoint artifact in the documentation workspace containing at least:
+Persist a small checkpoint containing:
 
 - system framing
 - approved scope
 - approved module decomposition
 - current module/capability/flow
-- completed areas
-- in-progress areas
-- unexplored approved areas
+- completed/in-progress/unexplored approved areas
 - open questions
 - unknowns
 - conflicts
 - important user confirmations
 - last checkpoint
 
-Checkpoint after:
+Checkpoint after framing approval, decomposition approval, substantial traces, important user answers, completed flows/subflows, resolved status/variant/conflict work, before switching areas, around sub-agent waves and before context pressure risks losing work.
 
-- framing/scope approval
-- decomposition approval
-- substantial code trace
-- important user answer
-- completed flow/subflow
-- resolved status model/variant/conflict
-- before switching bounded areas
-- before/after a sub-agent investigation wave
-- before context pressure risks losing work
-
-A new session must read the checkpoint and relevant Markdown first rather than rediscovering the entire repository.
+New sessions must resume from checkpoint + relevant docs instead of rediscovering the repository.
 
 ## Sub-Agent Coordination
 
-Use sub-agents when supported and tasks are independent. Otherwise execute the same queue sequentially.
+Use sub-agents when supported and investigations are independent. Otherwise run the same queue sequentially.
 
-Good parallel tasks include independent child flows, job discovery, API mapping, schema usage, status-write tracing and integration discovery after the module boundary is approved.
+Good parallel work: independent child flows, job discovery, API mapping, schema usage, status-write tracing, integration discovery after hierarchy approval.
 
-Each sub-agent receives exact scope, question(s), relevant known context, allowed paths where practical, evidence requirements and explicit instruction not to guess.
+Each sub-agent receives exact scope, questions, relevant context, allowed paths where practical, evidence requirements and a no-guessing rule.
 
-Sub-agents return evidence-backed findings. **The coordinator is the canonical writer.** The coordinator detects conflicts, interviews the user where needed, merges verified findings and checkpoints.
+Sub-agents return findings; **the coordinator is the canonical writer**. Do not delegate system/module hierarchy or business ordering decisions independently.
 
-Do not delegate agents to independently decide the system/module/capability hierarchy or invent business ordering.
+## Human Documentation / Docusaurus Publishing
 
-## Human Documentation / docmd Publishing
+Human documentation is a first-class deliverable.
 
-The human documentation is a first-class deliverable, not a rendering afterthought.
+### Information architecture
 
-Use the official docmd skill/instructions for presentation details. This skill supplies verified content and required information architecture.
+Prefer a module-oriented sidebar rather than a repository/package-oriented sidebar:
 
-Human pages should be:
+```text
+System Overview
+Modules
+  Outward Clearing
+    Overview
+    Architecture
+    Flows
+    Timeline
+    Status Model
+    Data Model
+    Batch Jobs
+    APIs
+    Integrations
+    Testing
+    Operations
+Developer Reference
+Documentation Coverage
+```
 
-- business-first and technically deep
-- clear and visually attractive
-- searchable and cross-linked
-- progressively drillable
-- concise at overview level and detailed on child pages
-- explicit about unknown/conflicting knowledge
-- usable by new developers, maintainers and operations/support readers
+Each flow may have child pages when large.
 
-Use Mermaid where diagrams improve understanding, especially for:
+### Visual quality
 
-- system/module architecture
-- end-to-end flows
-- subflows
-- sequences
-- status/state transitions
-- ER/data relationships
-- service/integration dependencies
+Use Docusaurus Markdown/MDX and Mermaid for architecture, end-to-end flows, subflows, sequences, state transitions, ER relationships and dependency maps.
 
-Prefer overview -> drill-down -> technical reference. Never create one giant diagram for a large module. Use consistent semantic colors according to the docmd/Mermaid guidance rather than decorative random colors.
+Prefer overview -> drill-down -> technical reference. Never force a complex module into one diagram/page.
 
-Markdown remains canonical. docmd may additionally generate search/navigation, OKF/graph outputs, LLM context files and MCP access. These are consumers/derived representations, not separate sources of truth.
+Use consistent semantic colors for categories such as normal processing, decisions, integrations, failures/unknowns and out-of-scope boundaries. Ensure meaning is still understandable without color.
+
+Prefer built-in Docusaurus/admonition/tabs/details capabilities before custom React. Add reusable custom MDX components only for repeated high-value interactions such as a status/variant explorer; do not build bespoke UI for every page.
+
+Keep animations subtle and optional. Documentation must remain understandable as static content.
+
+### Agent usability
+
+Because Markdown is canonical, agents should be able to read `documentation/docs/` directly without needing the rendered site.
+
+Maintain a small agent entry point such as `documentation/AGENT_INDEX.md` or equivalent containing:
+
+- system/module map
+- approved scope/coverage
+- links to module overview pages
+- current checkpoint location
+- key glossary/reference links
+
+Do not duplicate all documentation into an agent-only knowledge tree. The index should navigate the same Markdown humans use.
+
+## Docusaurus Build Discipline
+
+Docusaurus infrastructure must not become an unfinished side project.
+
+- Pin/use the repository-approved dependency versions.
+- Do not upgrade dependencies unless required/approved.
+- Build immediately after initial setup.
+- Build after structural navigation/configuration changes.
+- Build again at completion.
+- Treat broken links, invalid MDX/Mermaid and sidebar failures as documentation defects.
+- If the build is broken, do not declare documentation complete.
+- Do not rewrite a working Docusaurus configuration merely for aesthetics.
 
 ## Completion Gate
 
-Do **not** declare the requested scope complete merely because discovery files or agent context exist.
+Do **not** declare completion because discovery/agent notes exist.
 
-Completion requires, for the approved scope:
+Completion requires for approved scope:
 
 - system framing approved
 - module scope approved
-- module capability/flow decomposition approved
-- major business flows verified/confirmed
+- capability/flow decomposition approved
+- major flows verified/confirmed
 - architecture documented
 - important state transitions documented
-- important data model/table schemas documented
+- important data/table schemas documented
 - jobs/APIs/integrations connected to flows
-- testing and operational knowledge captured where applicable
-- unknowns/conflicts explicitly reported
-- out-of-scope boundaries respected
-- human Markdown pages generated
+- testing/operations captured where applicable
+- unknowns/conflicts reported
+- scope boundaries respected
+- human Markdown/MDX pages generated
 - useful Mermaid diagrams generated
-- navigation/cross-links generated
-- agent/OKF outputs generated when configured by docmd
-- docmd validation succeeds
-- docmd build succeeds
-- checkpoint/resume state is current
+- Docusaurus navigation/cross-links generated
+- agent index points to the same canonical docs
+- Docusaurus build succeeds
+- checkpoint is current
 
-If build/validation tooling cannot be executed, state that explicitly and do not claim it passed.
+If build tooling cannot run, state that and do not claim it passed.
 
-Semantic completeness cannot be claimed while material `UNKNOWN` or `CONFLICT` items remain. Report them clearly.
+Semantic completeness cannot be claimed while material `UNKNOWN` or `CONFLICT` items remain.
 
 ## Maintenance Mode
 
-For later code changes:
+For later changes:
 
-1. read relevant documentation/checkpoint first
+1. read relevant docs/checkpoint
 2. inspect current implementation/change
-3. identify affected modules/flows/statuses/tables/jobs/APIs/integrations/tests
-4. update only affected verified Markdown
-5. update affected diagrams/cross-links
+3. identify affected flows/statuses/tables/jobs/APIs/integrations/tests
+4. update only affected canonical Markdown/MDX
+5. update affected diagrams/cross-links/navigation
 6. preserve unrelated and `USER_CONFIRMED` rationale
-7. use docmd validation/build
+7. run Docusaurus build
 8. checkpoint
 
-If current code contradicts human-confirmed rationale, preserve both and ask whether the business rule/design decision changed.
+If code contradicts human-confirmed rationale, preserve both and ask whether the business rule/design changed.
 
 ## Common Failure Modes
 
 | Failure | Required correction |
 |---|---|
 | Treat requested module as entire system | Frame system first and obtain approval |
-| Treat module as one flow | Discover capabilities/flows and obtain decomposition approval |
+| Treat module as one flow | Discover capabilities/flows and obtain approval |
 | Scan entire repository | Restrict deep analysis to approved scope |
-| Configure/build Docusaurus | Stop; use docmd + official docmd skill |
-| docmd unavailable | Ask user to configure it; do not improvise another platform |
-| Generate only agent knowledge | Continue until human documentation is complete |
-| Enum -> state diagram | Trace real transitions and evidence |
-| Dump schema without meaning | Document ownership, relationships, lifecycle and usage |
-| List jobs/APIs without context | Connect them to business flows |
-| Guess how testing/recovery works | Interview user or mark unknown |
+| Spend the task rebuilding Docusaurus | Get a minimal working shell, build it, then document |
+| Docusaurus unavailable | Ask user to configure/provide it; do not switch platforms |
+| Generate only agent knowledge | Continue until human documentation exists and builds |
+| Maintain separate human/agent truth | Use canonical Markdown + small agent index |
+| Enum -> state diagram | Trace actual transitions |
+| Dump schema without meaning | Explain ownership, relationships, lifecycle and usage |
+| List jobs/APIs without context | Connect them to flows |
+| Guess testing/recovery | Interview user or mark unknown |
 | Hide missing knowledge | Surface `UNKNOWN`/`CONFLICT` |
 | Giant Mermaid graph | Decompose into progressive diagrams |
-| Sub-agents edit canonical docs independently | Coordinator merges evidence |
+| Sub-agents edit canonical docs independently | Coordinator merges findings |
 | Restart discovery every session | Resume from checkpoint |
-| Rewrite human rationale during maintenance | Preserve and reconcile |
+| Rewrite human rationale | Preserve and reconcile |
