@@ -1,81 +1,138 @@
 # System Reverse Engineer
 
-An Agent Skill for reverse-engineering large existing software systems into evidence-backed documentation useful to both humans and coding agents.
+An Agent Skill for turning a large existing software system into an evidence-backed **LLM-ready technical knowledge pack** that is also readable by humans like a coherent technical book.
 
-The skill is designed for systems where understanding is spread across source code, microservices, batch jobs, APIs, databases, statuses, files/events, integrations, tests, operational procedures, existing documents, and experienced engineers.
+It is intended for complex brownfield systems where important understanding is distributed across source code, batch jobs, APIs, statuses, integrations, existing artifacts and experienced engineers.
 
-## Workflow
+## What it optimizes for
+
+The primary goal is not to generate a documentation website or exhaustive code reference.
+
+The goal is that a new developer can:
+
+- understand the system progressively from a clear starting point
+- understand modules and their end-to-end business flows
+- see where each flow enters the implementation
+- visually follow processing using Mermaid
+- understand important status lifecycles
+- preserve business rules and important implementation decisions
+- know where to start when modifying a flow
+- ask an LLM grounded questions over the same Markdown knowledge
+
+## Output
+
+The skill produces platform-independent Markdown, Mermaid diagrams, a lightweight local knowledge graph and resumable checkpoints.
+
+A typical project knowledge pack looks like:
 
 ```text
-Frame system
-    -> approve scope
-    -> map selected module
-    -> approve decomposition
-    -> reverse engineer progressively
-    -> interview domain experts
-    -> verify evidence
-    -> write canonical Markdown/MDX
-    -> publish and validate with Docusaurus
+documentation/
+  START_HERE.md
+  SYSTEM_OVERVIEW.md
+  GLOSSARY.md
+  modules/
+    <module>/
+      OVERVIEW.md
+      ARCHITECTURE.md
+      flows/
+        <flow>.md
+      STATUSES.md
+      BUSINESS_RULES.md
+      DECISIONS.md
+      CHANGE_GUIDE.md
+  knowledge/
+    graph.yaml
+  checkpoints/
+    current.md
+  AGENT_INDEX.md
 ```
 
-Docusaurus is the human-facing shell. Markdown/MDX remains the canonical documentation so coding agents can read the same knowledge directly from the repository.
+Files are created only when they add value; the skill does not generate empty boilerplate pages.
 
-## Key principles
+The same knowledge can be consumed directly by humans, CLI coding agents, Copilot/Notebook-style tools, RAG systems, IDEs or a future documentation UI.
 
-- Never assume the requested module is the whole system.
-- `Module != Flow`.
-- Establish `System -> Module -> Capability -> Flow -> Subflow -> Processing Step -> Technical Component` before deep investigation.
-- Require user approval of system/module scope.
-- Require another approval of the selected module's capability/flow decomposition.
-- Anything not approved is strictly `OUT_OF_SCOPE`.
-- Combine code evidence, authoritative artifacts and domain-expert interviews.
-- Never present inference as fact.
-- Keep unknowns and conflicts explicit.
-- Decompose large flows and checkpoint progress so later sessions can resume safely.
-- Use sub-agents for bounded independent investigations when supported; one coordinator owns canonical documentation.
-- Human-facing documentation is mandatory. Agent notes alone are not completion.
+## Core workflow
 
-## Docusaurus prerequisite
+1. Frame the overall system.
+2. Agree which modules/capabilities are in scope.
+3. Discover candidate capabilities and flows inside the selected module.
+4. Get the domain expert to approve/correct the decomposition.
+5. Establish the narrative/processing order.
+6. Reverse engineer one bounded flow at a time.
+7. Interview the domain expert where code cannot explain business meaning or rationale.
+8. Write verified canonical Markdown in reading order.
+9. Update the lightweight knowledge graph and agent index.
+10. Checkpoint continuously so later sessions can resume.
 
-The skill uses **Docusaurus** for human-facing publication.
+## Documentation reads like a book
 
-If a working Docusaurus site already exists under the repository documentation area, the agent reuses it rather than rebuilding it.
+The skill deliberately avoids producing a pile of independent reference pages.
 
-If no site exists, the agent initializes a minimal Docusaurus setup using versions/packages available and approved in the environment, then immediately verifies that the site builds before beginning large-scale documentation work.
+The intended reading journey is conceptually:
 
-If Docusaurus tooling is unavailable, the agent stops and asks the user to configure/provide it. It does not silently switch documentation platforms.
+**System overview -> Module overview -> End-to-end journey -> Flow 1 -> Flow 2 -> ... -> Status lifecycle -> Important rules/decisions -> Developer change guidance**
 
-Docusaurus setup is infrastructure, not the reverse-engineering task. The skill deliberately avoids unnecessary frontend customization.
+`START_HERE.md` provides the overall reading path. Each module overview explains its flow order. Flow pages explain what happens before and after them and point readers toward the next logical concept.
 
-## Module documentation contract
+Technical inventories such as jobs, APIs, tables and classes are supporting information rather than the primary narrative.
 
-Every approved module becomes an independently useful technical handbook. Where applicable it covers:
+## Flow documentation
 
-- Overview and terminology
-- Architecture and component responsibilities
-- Capabilities
-- Business flows and subflows
-- Processing timeline and dependencies
-- State/status transitions
-- Data model and important table schemas
-- Batch jobs and steps
-- APIs
-- Integrations
-- Files, events and messaging
-- Business rules
-- Variants and branches
-- Error handling
-- Recovery and reprocessing
-- Testing and test-data setup
-- Operations and troubleshooting
-- Architecture decisions/rationale
-- Code map and important entry points
+An important flow normally explains:
 
-A material category is documented, marked `NOT_APPLICABLE`, or identified as `UNKNOWN`; it should not silently disappear.
+- purpose
+- where it sits in the larger processing journey
+- business trigger and technical entry point
+- Mermaid visual overview
+- processing walkthrough
+- important business rules and variants
+- important status progression
+- architecture/components needed to understand the flow
+- important implementation decisions
+- where a developer should start when changing it
+- material failure/recovery behavior
+- what to read next
+
+The skill avoids filling pages with ordinary source-code snippets. It points to implementation entry points and uses code snippets only when a small piece of code is genuinely necessary to explain unusual behavior.
+
+## Mermaid only
+
+All actual diagrams must use Mermaid.
+
+This includes architecture, end-to-end journeys, flowcharts, sequence diagrams, status/state transitions, integration relationships and ER/data diagrams when needed.
+
+**ASCII/text-art diagrams are prohibited.**
+
+Large diagrams are decomposed into an overview and smaller drill-down diagrams rather than forcing an entire module into one graph.
+
+## Status lifecycle
+
+Statuses are first-class system knowledge.
+
+The skill traces actual status writes, reads, predicates, consumers and conditions instead of generating a state machine from an enum.
+
+For important statuses it captures business meaning, who sets it, why, who consumes it, verified next states, relevant flows, important side effects and known reasons processing may remain/stall there.
+
+Mermaid state diagrams are paired with concise explanatory text/tables.
+
+## Business and implementation knowledge
+
+The skill interviews the domain expert to preserve knowledge that code often cannot reveal, particularly:
+
+- business terminology and meaning
+- ordering/gates between processes
+- business rules and variants
+- why statuses exist
+- why unusual implementation decisions were made
+- manual/operational behavior
+- important recovery expectations
+- upstream/downstream assumptions
+
+User explanations are recorded as `USER_CONFIRMED` and cross-checked against implementation where applicable.
 
 ## Evidence model
 
-Material knowledge is classified as:
+Material knowledge uses these evidence states:
 
 - `CODE_VERIFIED`
 - `DOCUMENT_VERIFIED`
@@ -84,7 +141,7 @@ Material knowledge is classified as:
 - `UNKNOWN`
 - `CONFLICT`
 
-`INFERRED` information cannot become authoritative documentation until verified or confirmed. Conflicting code/user/document evidence is preserved as `CONFLICT` and investigated rather than silently resolved.
+Inference is discovery material, not authoritative documentation. Important unknowns and conflicts remain visible rather than being filled with plausible-looking content.
 
 ## Scope model
 
@@ -95,93 +152,54 @@ Coverage is tracked separately:
 - `TODO`
 - `OUT_OF_SCOPE`
 
-An out-of-scope module may appear as a verified dependency boundary, but its internals must not be investigated without explicit scope expansion.
+Anything not explicitly approved is treated as `OUT_OF_SCOPE`. An excluded module may appear as a known boundary but its internals are not reverse engineered without scope expansion.
 
-## Example
+## Lightweight knowledge graph
 
-If the user says:
+The local graph exists primarily for CLI/LLM navigation and later documentation maintenance.
 
-```text
-Document Outward Clearing.
-```
+It stays intentionally small, focusing on concepts such as:
 
-The skill must not interpret Outward Clearing as the entire application or as one flow. It first establishes something like:
+- System
+- Module
+- Capability
+- Flow
+- Status
+- Integration
+- Decision
+- important Component entry points when useful
 
-```text
-Cheque Clearing Platform
-|- Inward Clearing       OUT_OF_SCOPE
-|- Outward Clearing      IN_SCOPE
-|- Cheque Book           OUT_OF_SCOPE
-|- Inventory             OUT_OF_SCOPE
-|- Reports               OUT_OF_SCOPE
-`- Data Migration        OUT_OF_SCOPE
-```
+It does **not** model every table, API, job, class, method or test by default.
 
-After user approval, it discovers candidate capabilities/flows inside Outward Clearing and asks for another approval before deep reverse engineering.
-
-## User interviewing
-
-The skill interviews the domain expert whenever code cannot reliably establish business or operational truth, including business meaning, ordering/gates, statuses, variants, manual activities, recovery, testing practices, troubleshooting and historical rationale.
-
-Questions should be focused and preferably asked one at a time. Answers become `USER_CONFIRMED` knowledge and are cross-checked against implementation where applicable.
-
-## Status and data modelling
-
-Statuses are first-class knowledge. The skill traces actual writes, reads, conditions, consumers and side effects rather than generating a state machine from an enum.
-
-Important tables/entities are documented with purpose, ownership, keys/important columns, relationships, lifecycle, readers/writers, relevant flows and source evidence rather than as raw schema dumps.
-
-## Human documentation
-
-Docusaurus navigation is organized by business module rather than repository package structure.
-
-Use Markdown/MDX and Mermaid for architecture, flows, sequences, status/state transitions, ER models and integration/dependency diagrams. Large modules use progressive drill-down instead of giant diagrams.
-
-Prefer standard Docusaurus features such as admonitions, tabs and details before custom React components. Add custom components only when a repeated high-value interaction genuinely improves understanding.
-
-Keep color semantic and consistent, and keep documentation understandable without animation or color alone.
+The graph helps an agent find the relevant flow/page and semantic relationships. Rich explanations remain in canonical Markdown.
 
 ## Agent usage
 
-Agents consume the same canonical Markdown/MDX used by humans. Maintain a small entry point such as `documentation/AGENT_INDEX.md` containing the system/module map, documentation coverage, links to module overview pages, checkpoint location and key references.
+`AGENT_INDEX.md` is a cheap entry point for coding agents. It points to the system/module map, approved scope, module overview pages, graph and current checkpoint.
 
-Do not maintain a second full agent-only knowledge tree that can drift away from the human documentation.
+The intended navigation is:
 
-## Testing and operations
+**Agent index -> graph/reading path -> relevant Markdown -> source code only when needed**
 
-Documentation should help a future engineer safely modify and validate the system. Where applicable it captures prerequisites/configuration, test-data setup, how to trigger jobs/APIs/flows, expected results/statuses, DB verification, mocks/stubs, existing tests, integration testing, failure identification, recovery and troubleshooting.
+This avoids repeatedly scanning the entire repository.
 
-If evidence cannot establish the real procedure, the agent asks the user rather than inventing one.
+## Framework-aware discovery
+
+`references/framework-discovery.md` contains additional guidance for framework-aware reverse engineering, particularly Spring Boot and Spring Batch.
+
+The framework implementation is evidence for the business/system story; package structure is not automatically treated as the documentation hierarchy.
+
+## Knowledge-model reference
+
+`references/knowledge-model.md` defines the local graph conventions, evidence/provenance and maintenance behavior.
+
+The skill deliberately keeps the graph smaller than a full source-code dependency graph.
 
 ## Checkpoints and sub-agents
 
-Large systems are processed incrementally. Checkpoints preserve system framing, approved scope/decomposition, completed/in-progress work, open questions, unknowns, conflicts and important user confirmations.
+Large systems are investigated incrementally. The current checkpoint preserves approved scope/decomposition/reading order, completed and in-progress work, open questions, important unknowns/conflicts, user confirmations and the recommended next action.
 
-When sub-agents are supported, they may investigate independent bounded questions such as jobs, schemas, APIs, integrations or status writes. They return evidence-backed findings; the coordinator reconciles and writes canonical documentation.
-
-## Completion criteria
-
-The task is not complete because discovery files or agent notes exist.
-
-For the approved scope, completion requires the relevant hierarchy/decomposition to be approved, technical documentation to be produced, important unknowns/conflicts reported, human Markdown/MDX pages and useful diagrams to exist, navigation/cross-links to be valid, the agent index to point to the same canonical documentation, and the Docusaurus build to succeed.
-
-## Repository contents
-
-```text
-system-reverse-engineer/
-|- SKILL.md
-|- README.md
-`- references/
-   `- framework-discovery.md
-```
-
-`SKILL.md` contains the workflow and hard behavioral rules. `references/framework-discovery.md` contains framework-aware discovery guidance including Spring Boot/Spring Batch patterns.
-
-## Installation
-
-Copy or clone this directory into the skills location supported by your agent runtime. The skill itself does not depend on this GitHub repository at runtime.
-
-For restricted/offline environments, copy the skill and use the Docusaurus dependencies/toolchain approved and available inside that environment.
+When the runtime supports sub-agents, they may investigate bounded independent questions after scope/decomposition are approved. The coordinator reconciles findings and owns canonical Markdown, graph and checkpoints.
 
 ## Example prompts
 
@@ -190,17 +208,34 @@ Use system-reverse-engineer to document this application with me.
 ```
 
 ```text
-Document Outward Clearing only. Interview me when business behavior cannot be established from code.
+Document Outward Clearing only. First establish how it fits into the larger system, then interview me when business behavior cannot be established from code.
 ```
 
 ```text
-Continue from the last documentation checkpoint.
+Continue from the documentation checkpoint.
 ```
 
 ```text
-I changed this processing flow. Update only the affected system documentation.
+Update the documentation for this changed processing flow.
+```
+
+## Platform independence
+
+The skill does not require Docusaurus, docmd, MkDocs or another site generator.
+
+If a team later wants a website, the canonical Markdown can be rendered by a presentation platform without repeating the system-discovery work.
+
+## Repository contents
+
+```text
+system-reverse-engineer/
+|- SKILL.md
+|- README.md
+`- references/
+   |- framework-discovery.md
+   `- knowledge-model.md
 ```
 
 ## Proprietary systems
 
-Use the skill only with repositories, AI tooling and infrastructure approved by your organization. The skill is designed to operate beside the source repository; project knowledge does not need to be published to this public repository.
+Use the skill only with repositories, AI tooling and infrastructure approved by the organization. The knowledge pack is intended to live beside the source repository and does not need to be published externally.
