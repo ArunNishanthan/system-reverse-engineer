@@ -1,0 +1,3 @@
+interface:
+  display_name: "System Reverse Engineer"
+  short_description: "Reverse engineer complex systems into verified human-first knowledge."
