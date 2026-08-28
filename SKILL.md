@@ -1,268 +1,196 @@
 ---
 name: system-reverse-engineer
-description: Use when reverse-engineering, documenting, handing over, onboarding to, or maintaining a large existing software system. Creates scoped, evidence-backed, LLM-ready Markdown that reads like a coherent technical book, combining source-code analysis with domain-expert interviews. Focuses on business flows, entry points, architecture, status lifecycles, important decisions, developer change guidance, Mermaid visualizations, checkpoints, and a lightweight local knowledge graph for agent navigation.
+description: Reverse engineer large, poorly documented software systems into a human-readable, AI-navigable knowledge wiki. Use for legacy-system documentation, onboarding, reconstructing business flows from code, capturing departing-engineer knowledge, tracing statuses and integrations, or maintaining verified architecture and flow documentation through source evidence plus domain-expert interviews.
 ---
 
 # System Reverse Engineer
 
-## Goal
+Act as a senior engineer performing structured knowledge transfer, not as a generic documentation generator.
 
-Create a durable **system knowledge pack** from:
+## Non-negotiable principles
 
-`source code + existing artifacts + domain-expert interviews -> verified, narrative Markdown + Mermaid + lightweight knowledge graph`
+1. Write for humans; structure for AI.
+2. Treat code as evidence, not as the explanation itself.
+3. Never invent business intent from implementation clues.
+4. Interview knowledgeable people when intent, meaning, operations, sequence, or rationale cannot be established from artifacts.
+5. Work one bounded flow at a time.
+6. Use Mermaid for diagrams; never use ASCII diagrams.
+7. Keep canonical knowledge in linked Markdown. Do not require a separate graph database.
+8. Preserve provenance and uncertainty explicitly.
+9. Stop at checkpoints before expanding scope or publishing weak conclusions.
+10. Prefer connected narrative over class lists, repository dumps, or code-heavy notes.
 
-The output must work directly for humans and LLM tools such as CLI coding agents and notebook/RAG experiences. Do not require or initialize Docusaurus, docmd, MkDocs, or another documentation platform. A presentation layer may be added later without repeating reverse engineering.
+## Load guides only when needed
 
-The documentation must feel like a **technical book**, not a folder of disconnected reference pages.
+- Scope and dependency boundaries: `references/scope-guide.md`
+- System/module/flow discovery: `references/discovery-guide.md`
+- Evidence investigation and sub-agent delegation: `references/investigation-guide.md`
+- Human/domain-expert interviews: `references/interview-guide.md`
+- Evidence states and provenance: `references/evidence-guide.md`
+- Human-first documentation: `references/writing-guide.md`
+- Mermaid diagrams: `references/diagram-guide.md`
+- Quality gates and wiki audit: `references/quality-guide.md`
+- Updating knowledge after code changes: `references/maintenance-guide.md`
 
-## References
+Use templates in `templates/` only after the corresponding content is understood. Never create a large empty documentation tree in advance.
 
-Read only when relevant:
+# Workflow
 
-- Spring Boot/Spring Batch and framework-aware discovery: `references/framework-discovery.md`
-- Knowledge graph creation/maintenance and agent navigation: `references/knowledge-model.md`
+## Stage 0 - Initialize or resume
 
-## Non-Negotiable Rules
+1. Detect whether a knowledge wiki already exists.
+2. If it exists, read in this order: `index.md` -> current checkpoint -> relevant pages -> recent `log.md` entries.
+3. If it does not exist, create only the minimum index/checkpoint files.
+4. Record the active goal and scope.
 
-1. **Narrative before inventory.** Explain how the system works before cataloging technical artifacts.
-2. **Book-like continuity.** Every module/flow must have a clear place in the reading journey and explain what comes before/after it.
-3. **Mermaid only for diagrams. Never create ASCII/text-art diagrams.** Use ordinary text/bullets only when not representing a diagram.
-4. **Visual-first for complex behavior.** Start important flows/status lifecycles/architecture explanations with a useful Mermaid overview, then explain it.
-5. Establish `System -> Module -> Capability -> Flow -> Subflow` before deep investigation. Never assume a requested module is the whole system.
-6. Obtain explicit scope approval. Anything not approved is `OUT_OF_SCOPE`.
-7. Never investigate out-of-scope internals. Document only verified boundaries from the in-scope side.
-8. Never publish inference as fact. Verify, interview, or mark uncertainty.
-9. Interview the domain expert whenever code cannot establish business meaning, ordering, rationale, or operational truth.
-10. Focus on understanding, not code dumping. Source code is evidence and an implementation map, not the documentation itself.
-11. Statuses are first-class knowledge and must be traced from real reads/writes/conditions, not inferred from enums.
-12. Checkpoint continuously so large investigations survive context/session boundaries.
-13. Markdown is canonical. The local graph and agent index navigate it; they do not duplicate or replace it.
-14. Use sub-agents only for bounded approved investigations. The coordinator owns canonical documentation, graph and checkpoints.
+### Checkpoint 0 - Workspace ready
 
-## Stage 0 - Initialize or Resume the Knowledge Pack
+Proceed only when the target system, requested outcome, and documentation location are clear.
 
-Use `<repo-root>/documentation/` unless the repository already has an approved documentation location.
+## Stage 1 - Establish system context
 
-If documentation exists, first read `START_HERE.md`, `AGENT_INDEX.md`, the current checkpoint, and only the relevant module pages. Resume rather than rediscovering the repository.
+Read `references/discovery-guide.md`.
 
-If no documentation exists, initialize a minimal structure as needed:
+Determine only enough context to orient a new developer:
+- what the system is for
+- major business modules/capabilities
+- external actors/systems
+- high-level processing shape
+- important terminology
+- major unknowns
 
-```text
-documentation/
-  START_HERE.md
-  SYSTEM_OVERVIEW.md
-  GLOSSARY.md
-  modules/
-  knowledge/
-    graph.yaml
-  checkpoints/
-    current.md
-  AGENT_INDEX.md
-```
+Do not descend into every package or service.
 
-Do not create empty module/reference files before their content is understood.
+### Checkpoint 1 - System context
 
-## Stage 1 - Frame and Approve the System
+Present the proposed system map to the domain expert. Ask for correction when boundaries, terminology, or module responsibilities are uncertain. Deep module documentation must not begin until this context is accepted or explicitly marked provisional.
 
-Establish the conceptual hierarchy:
+## Stage 2 - Define scope and boundaries
 
-`SYSTEM -> MODULE -> CAPABILITY -> FLOW -> SUBFLOW -> PROCESSING STEP -> TECHNICAL COMPONENT`
+Read `references/scope-guide.md`.
 
-This hierarchy is conceptual; do not render it as ASCII art. When a visual is useful, use Mermaid.
+Classify discovered areas as:
+- `PRIMARY_SCOPE`: fully reverse engineer and document.
+- `DEPENDENCY_BOUNDARY`: understand only enough to explain the contract and impact on primary scope.
+- `OUT_OF_SCOPE`: record only when necessary for orientation.
 
-Ask only what is needed to determine:
+Never recursively document a large dependency merely because traversal reaches it.
 
-- system/product purpose
-- major known modules/business areas
-- requested module/capability scope
-- explicit exclusions/deferred areas
+### Checkpoint 2 - Scope approval
 
-Show the proposed scope clearly and obtain user approval before deep investigation. A request such as `Document Outward Clearing` means Outward Clearing is the current scope within a larger system unless explicitly confirmed otherwise.
+Show the primary scope, dependency boundaries, exclusions, and unresolved scope questions. Obtain domain-expert approval before deep investigation.
 
-Persist the approved framing immediately.
+## Stage 3 - Discover the module journey
 
-## Stage 2 - Map and Approve the Selected Module
+Identify the module's major capabilities and flows before documenting implementation details. Propose a reading journey, for example:
 
-Explore only enough in-scope code/artifacts to identify candidate capabilities and business flows. Do not assume Java packages, microservices, jobs, controllers, or repositories are business flows.
+`Module overview -> Entry flow -> Processing -> Posting -> Submission -> Status lifecycle -> Failure/recovery -> Change guide`
 
-Show the candidate module decomposition and uncertainties. Use Mermaid when visualization improves understanding. Obtain user approval/correction before deep reverse engineering.
+Create a Mermaid overview only when enough evidence exists to make it truthful.
 
-A large module must not be represented as one artificial flow merely because the user initially named only that module.
+### Checkpoint 3 - Journey approval
 
-## Stage 3 - Discover the Reading Journey
+Validate with a knowledgeable person:
+- major flows are not missing
+- sequence is correct
+- flow boundaries are sensible
+- dependencies are not being mistaken for internal flows
 
-Before writing detailed pages, determine the **narrative order** for the approved scope.
+Do not author final flow pages before this checkpoint.
 
-For a module, establish:
+## Stage 4 - Reverse engineer one flow
 
-1. What is this module and why does it exist?
-2. Where does processing enter the module?
-3. What are the major flows and in what business/processing order should a newcomer learn them?
-4. Where do flows branch or rejoin?
-5. What statuses are important to understanding progression?
-6. What important external boundaries exist?
-7. Which business/technical decisions are essential context?
+Select one bounded flow from the approved journey.
 
-Persist this order and use it to organize pages. File creation order does not determine reading order.
+### 4A. Build an investigation plan
 
-`START_HERE.md` must provide the top-level reading path. Module overview pages must provide the module reading path. Flow pages must link conceptually to previous/next flows where meaningful.
+Read `references/investigation-guide.md`.
 
-## Stage 4 - Reverse Engineer One Flow at a Time
+Consider independent tracks such as trigger/entry point, execution path, status reads/writes, business-rule implementation, integrations, important persistence, and failure/recovery.
 
-When applicable, read `references/framework-discovery.md` before framework-specific tracing.
+If the host supports sub-agents and two or more independent tracks exist, delegate evidence discovery in parallel. Sub-agents discover evidence only; they never own scope, interviews, interpretation, canonical writing, or final diagrams.
 
-For each approved flow/subflow:
+### 4B. Reconcile evidence
 
-1. Determine its purpose and relationship to the previous/next processing stage.
-2. Find the real entry point/trigger.
-3. Trace the end-to-end processing path.
-4. Identify the architecture/components necessary to understand the flow.
-5. Trace important business rules and variants.
-6. Trace important status changes from actual implementation evidence.
-7. Identify important integrations/data only when needed to understand the flow.
-8. Identify important implementation decisions/rationale.
-9. Identify developer entry points for changing the flow.
-10. Interview the user for missing business/rationale/operational knowledge.
-11. Reconcile conflicts.
-12. Write/update the canonical flow page.
-13. Update affected graph/index/checkpoint.
+Separate findings into verified facts, inferences, conflicts, unknowns, and questions that require a person.
 
-If the flow becomes too large, split it into subflows and create an overview Mermaid diagram that links the conceptual stages together. Do not force everything into one giant diagram or page.
+### 4C. Interview the domain expert
 
-## Flow Page Contract
+Read `references/interview-guide.md`.
 
-Every important flow should answer, where applicable:
+Interview whenever artifacts cannot reliably establish business meaning or operational intent. Ask one focused question at a time. Incorporate the answer before asking the next.
 
-### 1. Purpose
-What business/process problem does this flow solve?
+Typical interview topics include why the flow exists, what business event triggers it, why a status exists, what happens operationally when stuck, why branches differ, historical rationale, and manual recovery.
 
-### 2. Position in the journey
-What happens before this flow? What causes it to begin? What normally happens after it?
+### Checkpoint 4 - Flow understanding
 
-### 3. Visual overview
-Use a Mermaid flowchart or sequence diagram showing the meaningful processing stages. Never use ASCII diagrams.
+Before authoring final documentation, ensure the model contains purpose, trigger, technical entry point, connected stages, important branches, relevant statuses, dependency boundaries, outcome, next flow, and material failure/recovery behavior.
 
-### 4. Entry point
-Explain the business trigger and technical entry point. Point to the relevant job/controller/listener/service/class/symbol without dumping its source code.
+Expose unresolved inference or uncertainty instead of hiding it.
 
-### 5. Processing walkthrough
-Explain the flow in the same order it executes or occurs. Keep the narrative connected to the visual overview.
+## Stage 5 - Author the flow
 
-### 6. Business rules and variants
-Capture rules a future developer must understand, especially knowledge that is not obvious from code.
+Read `references/writing-guide.md`, `references/diagram-guide.md`, and `references/evidence-guide.md`. Use `templates/flow.md` as a shape, not a form to fill mechanically.
 
-### 7. Status progression
-Explain important status transitions involved in the flow and link to the module status model when appropriate.
+A significant flow should explain, where relevant:
+1. purpose
+2. position in the larger journey
+3. Mermaid visual overview
+4. business trigger and technical entry point
+5. connected processing walkthrough
+6. business rules and meaningful variants
+7. status progression
+8. relevant architecture and dependency boundaries
+9. important implementation decisions/rationale
+10. developer change guidance
+11. failure/recovery behavior
+12. where to continue reading
 
-### 8. Architecture involved
-Explain only the services/components/integrations/data stores needed to understand this flow.
+Class/job/method names are supporting implementation references, not the primary explanation.
 
-### 9. Important implementation decisions
-Capture why unusual or non-obvious behavior exists. Preserve user-confirmed rationale.
+### Checkpoint 5 - Flow quality gate
 
-### 10. Developer change guide
-Explain where a developer should start when modifying this flow: important entry points, components, statuses/rules/integrations to consider, and relevant verification/testing where known.
+Read `references/quality-guide.md`.
 
-### 11. Failure/recovery notes
-Include when materially important and verified/confirmed.
+Do not mark a flow complete unless applicable checks pass:
+- a newcomer can understand it without opening source code
+- a useful Mermaid diagram exists
+- functional and technical entry points are clear
+- prose explains the connected journey
+- class names do not dominate
+- business meaning is present
+- relevant statuses are understandable
+- dependency boundaries are explicit
+- unsupported assumptions are not presented as facts
+- previous/next context is clear
+- important claims have provenance
 
-### 12. Continue reading
-Point to the logical next flow/subflow and useful related concepts. Do not leave the reader stranded.
+If the gate fails, rewrite before moving on. Update the checkpoint and `log.md` after completion, then return to Stage 4 for the next flow.
 
-Do not mechanically add empty sections. Mark material missing knowledge `UNKNOWN` and interview when it matters.
+## Stage 6 - Synthesize the module
 
-## Module Book Contract
+After major flows are individually verified:
+- write/update the module overview
+- create the end-to-end Mermaid journey
+- consolidate cross-flow status lifecycle
+- consolidate important business rules
+- capture important design decisions
+- create developer change guidance
+- link dependency boundaries to their own modules only when separately documented
 
-A documented module should normally read in this order:
+### Checkpoint 6 - Module review
 
-1. **Overview** - purpose, boundary, terminology, reading guide
-2. **Architecture** - only enough system structure to understand the module
-3. **End-to-end journey** - one Mermaid overview connecting the major flows
-4. **Flows** - detailed pages in narrative/process order
-5. **Status lifecycle** - cross-flow state progression
-6. **Business rules / variants** - cross-cutting rules not best explained in one flow
-7. **Important decisions** - business and implementation rationale worth preserving
-8. **Developer change guide** - where to start for common modifications
-9. **Further technical references** - only when they add value
+Review the module with the domain expert as one story, not as isolated pages. Confirm that the reading journey matches how the business actually operates.
 
-Do not organize the primary reading path around `APIs`, `Tables`, `Jobs`, `Repositories`, or `Classes`. Those are supporting implementation concepts, not the story of the system.
+## Stage 7 - Wiki audit
 
-## Status Model
+Read `references/quality-guide.md` and review the wiki as a new developer would.
 
-Statuses are especially important.
+Fix material issues: unexplained jumps, contradictions, orphan pages, broken links, duplicated explanations, inconsistent terminology, class-name-heavy prose, bullet-list documentation, missing diagrams/evidence, unresolved blockers, and unclear module/dependency boundaries.
 
-For each important status establish:
+# Evidence states
 
-- business meaning
-- owning entity/process
-- who/what sets it
-- condition/event that sets it
-- who/what consumes/checks it
-- valid next statuses when verified
-- important side effects
-- why a record may remain/stall there when known
-- relevant flow(s)
-- implementation evidence
-
-Trace actual writes, reads, predicates, repository queries, jobs/listeners/controllers and tests. Never generate a lifecycle from an enum alone.
-
-Use a Mermaid `stateDiagram-v2` when a lifecycle is useful. Accompany it with concise explanation/table because the diagram alone is not sufficient.
-
-## Architecture and Visual Rules
-
-Use Mermaid for all actual diagrams, including:
-
-- system/module architecture
-- end-to-end journeys
-- flowcharts
-- sequence diagrams
-- state transitions
-- integration relationships
-- ER/data relationships when genuinely needed
-
-Never use ASCII boxes, arrows, trees, timelines, or text-art diagrams.
-
-A diagram must answer a clear question. Split large diagrams into overview + drill-down diagrams. Do not visualize every class or table. Visualize the business/processing model first and technical implementation second.
-
-## Code and Technical Detail Rules
-
-Developer-centric does **not** mean code-heavy.
-
-Prefer an implementation map such as:
-
-| Responsibility | Implementation entry point | Why it matters |
-|---|---|---|
-| Job orchestration | `OutwardIngestionJobConfig` | Starts and coordinates ingestion |
-| Validation | `ValidationProcessor` | Applies the main ingestion rules |
-
-Use code snippets only when a small piece of code is essential to explain an unusual algorithm, workaround, rule, or implementation decision. Do not copy ordinary configuration/service/repository code into documentation.
-
-Document jobs, APIs, tables, integrations and schemas when they materially help explain a flow, status, decision, change path, or boundary. Avoid exhaustive inventories unless the user explicitly requests them.
-
-## Interview Protocol
-
-Interviewing is a primary knowledge source, not a fallback.
-
-Ask when code cannot establish:
-
-- business meaning/terminology
-- why processing is ordered a certain way
-- business rules/variants
-- important status meaning
-- why a technical decision exists
-- manual/operator behavior
-- recovery/reprocessing expectations
-- downstream/upstream expectations
-- important testing/verification knowledge
-
-Prefer one focused question at a time and explain what evidence/gap prompted it when useful.
-
-Record answers as `USER_CONFIRMED`. If the answer describes current technical behavior, cross-check against implementation where practical. If evidence conflicts, preserve a `CONFLICT` and clarify rather than silently choosing.
-
-## Evidence and Scope
-
-Evidence states:
-
+Use consistently:
 - `CODE_VERIFIED`
 - `DOCUMENT_VERIFIED`
 - `USER_CONFIRMED`
@@ -270,137 +198,23 @@ Evidence states:
 - `UNKNOWN`
 - `CONFLICT`
 
-Only verified/confirmed knowledge may be presented as established fact. `INFERRED` is temporary discovery knowledge, not authoritative prose. Keep material `UNKNOWN` and `CONFLICT` visible.
+Only verified or user-confirmed knowledge may be stated authoritatively. Keep inference visibly qualified until verified.
 
-Coverage states:
+# Human interview rule
 
-- `DOCUMENTED`
-- `IN_PROGRESS`
-- `TODO`
-- `OUT_OF_SCOPE`
+Do not use people only as final reviewers. Treat engineers, product owners, operations staff, BAs, and SMEs as evidence sources when artifacts are insufficient.
 
-Anything not explicitly approved is `OUT_OF_SCOPE`, not `UNKNOWN`.
+If source/artifacts can answer reliably, investigate first. If the question concerns intent, meaning, operational convention, or historical rationale, interview rather than guessing.
 
-## Lightweight Knowledge Graph
+# Query mode
 
-Read `references/knowledge-model.md` before creating/updating the graph.
+When asked about an already-documented system rather than to create/update documentation:
+1. read `index.md`
+2. follow only relevant links
+3. answer from maintained knowledge first
+4. inspect source only when the wiki is insufficient or verification is required
+5. do not activate the full reverse-engineering workflow unless documentation needs creation or repair
 
-The graph exists primarily so CLI/LLM agents can cheaply locate relevant knowledge and maintain affected documentation later. It is not intended as the primary human interface.
+# Completion definition
 
-Keep it small. Prefer semantic concepts such as:
-
-- `SYSTEM`
-- `MODULE`
-- `CAPABILITY`
-- `FLOW`
-- `STATUS`
-- `INTEGRATION`
-- `DECISION`
-- `COMPONENT` only for important technical entry points
-
-Do not model every table, entity, job, job step, API, class, method or test by default. Add another node type only when repeated use proves it materially improves navigation.
-
-The graph should primarily answer:
-
-- Which module/flow should an agent read?
-- What flow comes before/after this flow?
-- Which important statuses belong to this flow/module?
-- Which important integration/decision/component is associated with it?
-- Which canonical Markdown page contains the explanation?
-
-Keep rich explanations in Markdown. Graph relationships require evidence just like prose.
-
-## AGENT_INDEX.md
-
-Keep this file short. It should tell an agent:
-
-- what system this is
-- where to start reading
-- approved scope/coverage
-- module overview paths
-- graph location
-- current checkpoint location
-- how to interpret evidence/unknown/out-of-scope markers
-
-Agents should follow `AGENT_INDEX -> graph/reading path -> relevant Markdown -> source code only when needed` rather than loading the entire repository.
-
-## Checkpoint / Resume Protocol
-
-Persist `documentation/checkpoints/current.md` (or an approved equivalent) containing:
-
-- approved system/module scope
-- approved module decomposition
-- approved reading/flow order
-- current bounded investigation
-- completed/in-progress/TODO areas
-- open questions
-- material unknowns/conflicts
-- important user confirmations not yet fully incorporated
-- next recommended action
-
-Checkpoint after approvals, substantial traces, important user answers, completed flows/subflows, and before switching bounded areas or ending a session.
-
-## Sub-Agent Coordination
-
-Use sub-agents when supported for independent bounded investigations after hierarchy/scope/decomposition are approved.
-
-Good tasks include tracing one child flow, locating status writes/reads for a known status, identifying a flow's entry point, or investigating a specific integration boundary.
-
-Every sub-agent receives exact scope, question, known context, evidence requirements and a no-guessing rule. Sub-agents return findings; the coordinator reconciles and writes canonical Markdown/graph/checkpoint.
-
-Do not let separate agents independently decide the system hierarchy, business flow ordering, or canonical documentation structure.
-
-## Maintenance Mode
-
-When code changes later:
-
-1. Read `AGENT_INDEX.md`, graph, checkpoint and affected canonical docs.
-2. Inspect the actual implementation change.
-3. Determine which documented flows/statuses/decisions are affected.
-4. Update only affected Markdown and Mermaid diagrams.
-5. Update the lightweight graph if semantic relationships changed.
-6. Preserve unrelated `USER_CONFIRMED` rationale.
-7. Mark conflicts when new code contradicts documented rationale rather than silently rewriting history.
-8. Update checkpoint/coverage.
-
-## Completion Gate
-
-For the approved scope, do not claim completion until:
-
-- system/module framing is approved
-- module capability/flow decomposition is approved
-- reading/processing journey is coherent
-- `START_HERE.md` leads readers into the documented system
-- module overview explains where to start and how flows connect
-- important flows have entry points and Mermaid visual overviews
-- important status lifecycles are documented from evidence
-- important business rules and decisions are captured
-- developer change guidance exists where useful
-- pages connect logically rather than feeling isolated
-- material unknowns/conflicts are visible
-- scope boundaries are respected
-- lightweight graph/index point to canonical Markdown
-- checkpoint is current
-
-The success test is:
-
-> Can a new developer start from `START_HERE.md`, progressively understand the system like reading a technical book, visually follow a module's major flows, understand important statuses and decisions, find the implementation entry point when needed, and use an LLM to ask grounded questions over the same knowledge?
-
-## Common Failure Modes
-
-| Failure | Correction |
-|---|---|
-| Documentation feels "here and there" | Rebuild the reading journey and previous/next relationships |
-| Primary structure is jobs/APIs/tables | Reorganize around business/module flows |
-| Developer-centric becomes code snippets | Replace with explanation + implementation entry-point map |
-| Requested module becomes whole system | Frame and approve system first |
-| Module becomes one giant flow | Discover and approve capabilities/flows |
-| ASCII/text-art diagram appears | Replace it with Mermaid |
-| Giant Mermaid diagram | Split overview from drill-down diagrams |
-| Enum becomes state machine | Trace real status writes/reads/conditions |
-| Agent scans everything | Use scope + graph/index + bounded discovery |
-| Graph becomes another documentation corpus | Keep explanations in canonical Markdown |
-| Graph models every technical artifact | Keep only semantic navigation concepts |
-| Business/rationale knowledge is guessed | Interview the user |
-| Missing knowledge is hidden | Surface `UNKNOWN`/`CONFLICT` |
-| Session starts discovery again | Resume from checkpoint |
+Documentation is complete only when it is understandable by a human developer, navigable by an AI agent, evidence-backed, coherent across flows, explicit about uncertainty, visually supported by Mermaid where useful, and bounded to approved scope.
